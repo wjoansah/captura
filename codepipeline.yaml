@@ -65,7 +65,7 @@ Parameters:
     Default: "eu-central-1"
   DRRegion:
     Type: String
-    Default: "eu-north-1"
+    Default: "eu-west-1"
   ProdStackName:
     Type: String
     Default: "captura-stack-Prod"
