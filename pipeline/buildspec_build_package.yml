@@ -22,7 +22,7 @@ phases:
                     --output-template-file packaged-prod.yaml
 artifacts:
   files:
-    - packaged-test.yaml
+    - packaged-dev.yaml
     - packaged-prod.yaml
     - assume-role.sh
     - pipeline/*

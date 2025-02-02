@@ -282,7 +282,7 @@ Resources:
                   ProjectName: !Ref CodeBuildProjectDeploy
                   EnvironmentVariables: !Sub |
                     [
-                      {"name": "ENV_TEMPLATE", "value": "packaged-prod.yaml"},
+                      {"name": "ENV_TEMPLATE", "value": "packaged-dev.yaml"},
                       {"name": "ENV_REGION", "value": "${DevRegion}"},
                       {"name": "ENV_STACK_NAME", "value": "${DevStackName}"},
                       {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${DevPipelineExecutionRole}"},
@@ -330,7 +330,7 @@ Resources:
                   ProjectName: !Ref CodeBuildProjectDeploy
                   EnvironmentVariables: !Sub |
                     [
-                      {"name": "ENV_TEMPLATE", "value": "packaged-dr.yaml"},
+                      {"name": "ENV_TEMPLATE", "value": "packaged-prod.yaml"},
                       {"name": "ENV_REGION", "value": "${DRRegion}"},
                       {"name": "ENV_STACK_NAME", "value": "${DRStackName}"},
                       {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${DRPipelineExecutionRole}"},
