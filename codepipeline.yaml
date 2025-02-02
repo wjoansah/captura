@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion : '2010-09-09'
+AWSTemplateFormatVersion: '2010-09-09'
 Description: >
   This template deploys a CodePipeline with its required resources.
 
@@ -8,7 +8,7 @@ Description: >
   - BuildAndDeployFeatureStack (FeatureGitBranch only)
   - BuildAndPackage (MainGitBranch only)
   - DeployTest (MainGitBranch only)
-  - DeployProd (MainGitBranch only)
+  - DeployDR (MainGitBranch only)
 
   **WARNING** You will be billed for the AWS resources used if you create a stack from this template.
 
@@ -39,49 +39,49 @@ Parameters:
   SamTemplate:
     Type: String
     Default: "template.yaml"
-  TestingRegion:
+  DevRegion:
     Type: String
     Default: "eu-central-1"
-  TestingStackName:
+  DevStackName:
     Type: String
     Default: "captura-stack-Dev"
-  TestingPipelineExecutionRole:
+  ProdRegion:
     Type: String
-    Default: "arn:aws:iam::448049785966:role/aws-sam-cli-managed-Dev-pipel-PipelineExecutionRole-B8tCfXWvMJoV"
-  TestingCloudFormationExecutionRole:
+    Default: "eu-central-1"
+  ProdStackName:
     Type: String
-    Default: "arn:aws:iam::448049785966:role/aws-sam-cli-managed-Dev-p-CloudFormationExecutionRo-430oyHuuzQvo"
-  TestingArtifactBucket:
+    Default: "captura-stack-Prod"
+  DevPipelineExecutionRole:
     Type: String
-    Default: "aws-sam-cli-managed-dev-pipeline-r-artifactsbucket-n72ktiju7ivg"
-  TestingImageRepository:
+    Default: "arn:aws:iam::448049785966:role/aws-sam-cli-managed-Prod-pipe-PipelineExecutionRole-WJ2uN3jntqFU"
+  DevCloudFormationExecutionRole:
+    Type: String
+    Default: "arn:aws:iam::448049785966:role/aws-sam-cli-managed-Prod--CloudFormationExecutionRo-SPHYB9Js98AT"
+  DevArtifactBucket:
+    Type: String
+    Default: "aws-sam-cli-managed-prod-pipeline--artifactsbucket-ykt1lffjkvix"
+  DevImageRepository:
     Type: String
     # If there are functions with "Image" PackageType in your template,
     # Update the line below with image repository URL and add "--image-repository ${TESTING_IMAGE_REPOSITORY}" to
     # prod "sam package" and "sam deploy" commands in buildspec files (in pipeline/).
     Default: ""
-  ProdRegion:
-    Type: String
-    Default: "eu-central-1"
   DRRegion:
     Type: String
     Default: "eu-west-1"
-  ProdStackName:
-    Type: String
-    Default: "captura-stack-Prod"
   DRStackName:
     Type: String
     Default: "captura-stack-DR"
-  ProdPipelineExecutionRole:
+  DRPipelineExecutionRole:
     Type: String
-    Default: "arn:aws:iam::448049785966:role/aws-sam-cli-managed-Prod-pipe-PipelineExecutionRole-WJ2uN3jntqFU"
-  ProdCloudFormationExecutionExeRole:
+    Default: "arn:aws:iam::448049785966:role/aws-sam-cli-managed-DR-pipeli-PipelineExecutionRole-ZB3vePL9qZ8o"
+  DRCloudFormationExecutionExeRole:
     Type: String
-    Default: "arn:aws:iam::448049785966:role/aws-sam-cli-managed-Prod--CloudFormationExecutionRo-SPHYB9Js98AT"
-  ProdArtifactBucket:
+    Default: "arn:aws:iam::448049785966:role/aws-sam-cli-managed-DR-pi-CloudFormationExecutionRo-fGCxQ047Ckly"
+  DRArtifactBucket:
     Type: String
-    Default: "aws-sam-cli-managed-prod-pipeline--artifactsbucket-ykt1lffjkvix"
-  ProdImageRepository:
+    Default: "aws-sam-cli-managed-dr-pipeline-re-artifactsbucket-rqng6tvnewah"
+  DRImageRepository:
     Type: String
     # If there are functions with "Image" PackageType in your template,
     # Update the line below with image repository URL and add "--image-repository ${PROD_IMAGE_REPOSITORY}" to
@@ -90,15 +90,15 @@ Parameters:
   # CodeStarConnectionArn and FeatureGitBranch are required for pipelines for feature branches
   CodeStarConnectionArn:
     Type: String
-    Default: ""
+    Default: "arn:aws:codestar-connections:eu-central-1:448049785966:connection/25e669e5-2fbb-4eed-8bb1-754261fe9ab5"
   FeatureGitBranch:
     Type: String
     Default: ""
 
 Conditions:
-  IsMainBranchPipeline: !Equals [!Ref FeatureGitBranch, ""]
-  IsFeatureBranchPipeline: !Not [Condition: IsMainBranchPipeline]
-  CreateConnection: !Equals [!Ref CodeStarConnectionArn, ""]
+  IsMainBranchPipeline: !Equals [ !Ref FeatureGitBranch, "" ]
+  IsFeatureBranchPipeline: !Not [ Condition: IsMainBranchPipeline ]
+  CreateConnection: !Equals [ !Ref CodeStarConnectionArn, "" ]
 
 Resources:
   #   ____
@@ -137,9 +137,9 @@ Resources:
                 Provider: CodeStarSourceConnection
                 Version: "1"
               Configuration:
-                ConnectionArn: !If [CreateConnection, !Ref CodeStarConnection, !Ref CodeStarConnectionArn]
+                ConnectionArn: !If [ CreateConnection, !Ref CodeStarConnection, !Ref CodeStarConnectionArn ]
                 FullRepositoryId: !Ref FullRepositoryId
-                BranchName: !If [IsFeatureBranchPipeline, !Ref FeatureGitBranch, !Ref MainGitBranch]
+                BranchName: !If [ IsFeatureBranchPipeline, !Ref FeatureGitBranch, !Ref MainGitBranch ]
               OutputArtifacts:
                 - Name: SourceCodeAsZip
               RunOrder: 1
@@ -231,9 +231,9 @@ Resources:
 
         - !If
           - IsMainBranchPipeline
-          - Name: DeployTest
+          - Name: DeployDev
             Actions:
-              - Name: DeployTest
+              - Name: DeployDev
                 ActionTypeId:
                   Category: Build
                   Owner: AWS
@@ -243,13 +243,13 @@ Resources:
                   ProjectName: !Ref CodeBuildProjectDeploy
                   EnvironmentVariables: !Sub |
                     [
-                      {"name": "ENV_TEMPLATE", "value": "packaged-test.yaml"},
-                      {"name": "ENV_REGION", "value": "${TestingRegion}"},
-                      {"name": "ENV_STACK_NAME", "value": "${TestingStackName}"},
-                      {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${TestingPipelineExecutionRole}"},
-                      {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${TestingCloudFormationExecutionRole}"},
-                      {"name": "ENV_BUCKET", "value": "${TestingArtifactBucket}"},
-                      {"name": "ENV_IMAGE_REPOSITORY", "value": "${TestingImageRepository}"}
+                      {"name": "ENV_TEMPLATE", "value": "packaged-dev.yaml"},
+                      {"name": "ENV_REGION", "value": "${DevRegion}"},
+                      {"name": "ENV_STACK_NAME", "value": "${DevStackName}"},
+                      {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${DevPipelineExecutionRole}"},
+                      {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${DevCloudFormationExecutionRole}"},
+                      {"name": "ENV_BUCKET", "value": "${DevArtifactBucket}"},
+                      {"name": "ENV_IMAGE_REPOSITORY", "value": "${DevImageRepository}"}
                     ]
                 InputArtifacts:
                   - Name: BuildArtifactAsZip
@@ -272,37 +272,40 @@ Resources:
           - IsMainBranchPipeline
           - Name: DeployProd
             Actions:
-              # uncomment this to have a manual approval step before deployment to production
-              # - Name: ManualApproval
-              #   ActionTypeId:
-              #    Category: Approval
-              #    Owner: AWS
-              #    Provider: Manual
-              #    Version: "1"
-              #   RunOrder: 1
               - Name: DeployProd
                 ActionTypeId:
                   Category: Build
                   Owner: AWS
                   Provider: CodeBuild
                   Version: "1"
-                RunOrder: 2 # keeping run order as 2 in case manual approval is enabled
                 Configuration:
                   ProjectName: !Ref CodeBuildProjectDeploy
                   EnvironmentVariables: !Sub |
                     [
                       {"name": "ENV_TEMPLATE", "value": "packaged-prod.yaml"},
-                      {"name": "ENV_REGION", "value": "${ProdRegion}"},
-                      {"name": "ENV_STACK_NAME", "value": "${ProdStackName}"},
-                      {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${ProdPipelineExecutionRole}"},
-                      {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${ProdCloudFormationExecutionExeRole}"},
-                      {"name": "ENV_BUCKET", "value": "${ProdArtifactBucket}"},
-                      {"name": "ENV_IMAGE_REPOSITORY", "value": "${ProdImageRepository}"}
+                      {"name": "ENV_REGION", "value": "${DevRegion}"},
+                      {"name": "ENV_STACK_NAME", "value": "${DevStackName}"},
+                      {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${DevPipelineExecutionRole}"},
+                      {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${DevCloudFormationExecutionRole}"},
+                      {"name": "ENV_BUCKET", "value": "${DevArtifactBucket}"},
+                      {"name": "ENV_IMAGE_REPOSITORY", "value": "${DevImageRepository}"}
                     ]
                 InputArtifacts:
                   - Name: BuildArtifactAsZip
+                RunOrder: 1
+              # Uncomment the following step for running the integration tests
+              # - Name: IntegrationTest
+              #   ActionTypeId:
+              #     Category: Build
+              #     Owner: AWS
+              #     Provider: CodeBuild
+              #     Version: "1"
+              #   Configuration:
+              #     ProjectName: !Ref CodeBuildProjectIntegrationTest
+              #   InputArtifacts:
+              #     - Name: SourceCodeAsZip
+              #   RunOrder: 2
           - !Ref AWS::NoValue
-
 
         - !If
           - IsMainBranchPipeline
@@ -327,13 +330,13 @@ Resources:
                   ProjectName: !Ref CodeBuildProjectDeploy
                   EnvironmentVariables: !Sub |
                     [
-                      {"name": "ENV_TEMPLATE", "value": "packaged-prod.yaml"},
+                      {"name": "ENV_TEMPLATE", "value": "packaged-dr.yaml"},
                       {"name": "ENV_REGION", "value": "${DRRegion}"},
                       {"name": "ENV_STACK_NAME", "value": "${DRStackName}"},
-                      {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${ProdPipelineExecutionRole}"},
-                      {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${ProdCloudFormationExecutionExeRole}"},
-                      {"name": "ENV_BUCKET", "value": "${ProdArtifactBucket}"},
-                      {"name": "ENV_IMAGE_REPOSITORY", "value": "${ProdImageRepository}"}
+                      {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${DRPipelineExecutionRole}"},
+                      {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "$DRCloudFormationExecutionExeRole}"},
+                      {"name": "ENV_BUCKET", "value": "${DRArtifactBucket}"},
+                      {"name": "ENV_IMAGE_REPOSITORY", "value": "${DRImageRepository}"}
                     ]
                 InputArtifacts:
                   - Name: BuildArtifactAsZip
@@ -388,7 +391,7 @@ Resources:
       AccessControl: "LogDeliveryWrite"
       OwnershipControls:
         Rules:
-          - ObjectOwnership:  ObjectWriter
+          - ObjectOwnership: ObjectWriter
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
@@ -440,7 +443,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - "codestar-connections:UseConnection"
-                Resource: !If [CreateConnection, !Ref CodeStarConnection, !Ref CodeStarConnectionArn]
+                Resource: !If [ CreateConnection, !Ref CodeStarConnection, !Ref CodeStarConnectionArn ]
         - PolicyName: CodePipelineCodeAndS3Bucket
           PolicyDocument:
             Version: "2012-10-17"
@@ -610,15 +613,15 @@ Resources:
           - Name: SAM_TEMPLATE
             Value: !Ref SamTemplate
           - Name: TESTING_REGION
-            Value: !Ref TestingRegion
+            Value: !Ref DevRegion
           - Name: TESTING_PIPELINE_EXECUTION_ROLE
-            Value: !Ref TestingPipelineExecutionRole
+            Value: !Ref DevPipelineExecutionRole
           - Name: TESTING_CLOUDFORMATION_EXECUTION_ROLE
-            Value: !Ref TestingCloudFormationExecutionRole
+            Value: !Ref DevCloudFormationExecutionRole
           - Name: TESTING_ARTIFACT_BUCKET
-            Value: !Ref TestingArtifactBucket
+            Value: !Ref DevArtifactBucket
           - Name: TESTING_IMAGE_REPOSITORY
-            Value: !Ref TestingImageRepository
+            Value: !Ref DevImageRepository
           - Name: FEATURE_BRANCH_NAME
             Value: !Ref FeatureGitBranch
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
@@ -641,21 +644,21 @@ Resources:
           - Name: SAM_TEMPLATE
             Value: !Ref SamTemplate
           - Name: TESTING_REGION
-            Value: !Ref TestingRegion
+            Value: !Ref DevRegion
           - Name: PROD_REGION
-            Value: !Ref ProdRegion
+            Value: !Ref DRRegion
           - Name: TESTING_PIPELINE_EXECUTION_ROLE
-            Value: !Ref TestingPipelineExecutionRole
+            Value: !Ref DevPipelineExecutionRole
           - Name: PROD_PIPELINE_EXECUTION_ROLE
-            Value: !Ref ProdPipelineExecutionRole
+            Value: !Ref DRPipelineExecutionRole
           - Name: TESTING_ARTIFACT_BUCKET
-            Value: !Ref TestingArtifactBucket
+            Value: !Ref DevArtifactBucket
           - Name: PROD_ARTIFACT_BUCKET
-            Value: !Ref ProdArtifactBucket
+            Value: !Ref DRArtifactBucket
           - Name: TESTING_IMAGE_REPOSITORY
-            Value: !Ref TestingImageRepository
+            Value: !Ref DevImageRepository
           - Name: PROD_IMAGE_REPOSITORY
-            Value: !Ref ProdImageRepository
+            Value: !Ref DRImageRepository
       ServiceRole: !GetAtt CodeBuildServiceRole.Arn
       Source:
         Type: CODEPIPELINE
