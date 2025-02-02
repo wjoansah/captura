@@ -334,7 +334,7 @@ Resources:
                       {"name": "ENV_REGION", "value": "${DRRegion}"},
                       {"name": "ENV_STACK_NAME", "value": "${DRStackName}"},
                       {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${DRPipelineExecutionRole}"},
-                      {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "$DRCloudFormationExecutionExeRole}"},
+                      {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${DRCloudFormationExecutionExeRole}"},
                       {"name": "ENV_BUCKET", "value": "${DRArtifactBucket}"},
                       {"name": "ENV_IMAGE_REPOSITORY", "value": "${DRImageRepository}"}
                     ]
