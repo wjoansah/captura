@@ -283,8 +283,8 @@ Resources:
                   EnvironmentVariables: !Sub |
                     [
                       {"name": "ENV_TEMPLATE", "value": "packaged-dev.yaml"},
-                      {"name": "ENV_REGION", "value": "${DevRegion}"},
-                      {"name": "ENV_STACK_NAME", "value": "${DevStackName}"},
+                      {"name": "ENV_REGION", "value": "${ProdRegion}"},
+                      {"name": "ENV_STACK_NAME", "value": "${ProdStackName}"},
                       {"name": "ENV_PIPELINE_EXECUTION_ROLE", "value": "${DevPipelineExecutionRole}"},
                       {"name": "ENV_CLOUDFORMATION_EXECUTION_ROLE", "value": "${DevCloudFormationExecutionRole}"},
                       {"name": "ENV_BUCKET", "value": "${DevArtifactBucket}"},
