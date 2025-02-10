@@ -3,36 +3,136 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   captura
 
-  Sample SAM Template for captura
-  
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+  SAM Template for captura
+
 Globals:
   Function:
-    Timeout: 3
+    CodeUri: src/
+    Runtime: nodejs22.x
+    MemorySize: 128
+    Architectures:
+      - x86_64
+    Timeout: 100
+    Tracing: Active
+    Layers:
+      - !Ref DependenciesLayer
+
+Metadata:
+  BuildMethod: esbuild
+  BuildProperties:
+    Minify: true
+    Target: "es2020"
+    Sourcemap: true
+
+Parameters:
+  DevAuthCallbackUrl:
+    Type: String
+    Description: Auth callback in development
+    Default: http://localhost:3000
+  ProdAuthCallbackUrl:
+    Type: String
+    Description: Auth callback in production
+    Default: http://localhost:3000
 
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+  DependenciesLayer:
+    Type: AWS::Serverless::LayerVersion
     Properties:
-      CodeUri: hello-world/
+      LayerName: DependenciesLayer
+      Description: A shared layer for npm dependencies
+      ContentUri: layers/deps
+      CompatibleRuntimes:
+        - nodejs22.x
+      RetentionPolicy: Delete
+
+  # User Pool
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub ${AWS::StackName}-UserPool
+      AutoVerifiedAttributes:
+        - email
+      Schema:
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: email
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+      UsernameAttributes:
+        - email
+      UserPoolTags:
+        Key: Name
+        Value: !Sub ${AWS::StackName} User Pool
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          TemporaryPasswordValidityDays: 7
+
+  # User Pool Client
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName:
+        !Sub ${AWS::StackName}-UserPoolClient
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
+      RefreshTokenValidity: 30
+      AccessTokenValidity: 6
+      IdTokenValidity: 6
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+      SupportedIdentityProviders:
+        - COGNITO
+      UserPoolId: !Ref UserPool
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - 'code'
+      AllowedOAuthScopes:
+        - 'email'
+        - 'openid'
+      CallbackURLs:
+        - !Ref DevAuthCallbackUrl
+        - !Ref ProdAuthCallbackUrl
+
+  # User Pool Domain
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      DomainName: !Sub ${AWS::StackName}-UserPoolDomain
+      Domain: !Ref UserPoolClient
+      UserPoolId: !Ref UserPool
+      ManagedLoginVersion: "2"
+
+  BrandedLogin:
+    Type: AWS::Cognito::ManagedLoginBranding
+    Properties:
+      ClientId: !Ref UserPoolClient
+      UserPoolId: !Ref UserPool
+      UseCognitoProvidedValues: true
+
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
       Handler: app.lambdaHandler
-      Runtime: nodejs22.x
-      Architectures:
-        - x86_64
       Events:
         HelloWorld:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: Api
           Properties:
             Path: /hello
             Method: get
-    Metadata: # Manage esbuild properties
-      BuildMethod: esbuild
-      BuildProperties:
-        Minify: true
-        Target: "es2020"
-        Sourcemap: true
-        EntryPoints: 
-        - app.ts
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
