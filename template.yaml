@@ -111,10 +111,10 @@ Resources:
   UserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
-      DomainName: !Sub ${AWS::StackName}-UserPoolDomain
       Domain: !Ref UserPoolClient
       UserPoolId: !Ref UserPool
       ManagedLoginVersion: "2"
+
 
   BrandedLogin:
     Type: AWS::Cognito::ManagedLoginBranding
