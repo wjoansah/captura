@@ -133,6 +133,9 @@ Resources:
           Properties:
             Path: /hello
             Method: get
+    Metadata:
+      EntryPoints:
+        - app.ts
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
