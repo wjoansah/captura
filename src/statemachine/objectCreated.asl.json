@@ -1,0 +1,39 @@
+{
+  "Comment": "Image processing state machine",
+  "StartAt": "ProcessImage",
+  "States": {
+    "ProcessImage": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${ImageProcessingFunction}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 300,
+          "MaxAttempts": 3,
+          "BackoffRate": 2.0
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "SendFailureNotification"
+        }
+      ],
+      "Next": "DeleteOriginalImage"
+    },
+    "DeleteOriginalImage": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${CleanupFunction}",
+      "End": true
+    },
+    "SendFailureNotification": {
+      "Type": "Task",
+      "Resource": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${SendNotificationFunction}",
+      "End": true
+    }
+  }
+}
