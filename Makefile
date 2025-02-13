@@ -1,3 +1,2 @@
 deps-layer:
-    cd layers/deps/nodejs && npm install --only=prod
-
+	cd layers/deps/nodejs && npm install --only=prod
