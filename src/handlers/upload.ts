@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { S3Client, PutObjectCommand } from '/opt/nodejs/@aws-sdk/client-s3';
-import { fromBuffer } from '/opt/nodejs/file-type';
+import { fileTypeFromBuffer } from '/opt/nodejs/file-type';
 
 const STAGING_BUCKET_NAME = process.env.STAGING_BUCKET_NAME!;
 
@@ -18,7 +18,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
         const fileContent = Buffer.from(event.body, 'base64');
 
-        const fileType = await fromBuffer(fileContent);
+        const fileType = await fileTypeFromBuffer(fileContent);
         if (!fileType || !fileType.mime.startsWith('image/')) {
             return {
                 statusCode: 400,
