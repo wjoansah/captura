@@ -14,15 +14,16 @@ Globals:
       - x86_64
     Timeout: 100
     Tracing: Active
+    Environment:
+      Variables:
+        NODE_OPTIONS: --enable-source-maps
     Layers:
       - !Ref DependenciesLayer
 
-Metadata:
-  BuildMethod: esbuild
-  BuildProperties:
-    Minify: true
-    Target: "es2020"
-    Sourcemap: true
+BuildProps: &CommonBuildProps
+  Minify: true
+  Target: "es2020"
+  Sourcemap: true
 
 Parameters:
   DevAuthCallbackUrl:
@@ -33,6 +34,15 @@ Parameters:
     Type: String
     Description: Auth callback in production
     Default: http://localhost:3000
+  PrimaryRegion:
+    Type: String
+    Default: "eu-central-1"
+  DRRegion:
+    Type: String
+    Default: "eu-west-1"
+
+Conditions:
+  IsPrimaryRegion: !Equals [!Ref AWS::Region, !Ref PrimaryRegion]
 
 Resources:
   DependenciesLayer:
@@ -122,6 +132,198 @@ Resources:
       ClientId: !Ref UserPoolClient
       UserPoolId: !Ref UserPool
       UseCognitoProvidedValues: true
+
+  StagingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${AWS::StackName}-staging-bucket'
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  PrimaryBucket:
+    Type: AWS::S3::Bucket
+    Condition: IsPrimaryRegion
+    Properties:
+      BucketName: !Sub '${AWS::StackName}-captura-bucket-primary'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      VersioningConfiguration:
+        Status: Enabled
+    ReplicationConfiguration:
+      Role: !GetAtt S3ReplicationRole.Arn
+      Rules:
+        - Destination:
+            Bucket: !Sub arn:aws:s3:::${PrimaryBucketReplica}
+          Status: Enabled
+          Prefix: ""
+
+  PrimaryBucketReplica:
+    Type: AWS::S3::Bucket
+    Condition: !Not IsPrimaryRegion
+    Properties:
+      BucketName: !Sub '${AWS::StackName}-captura-bucket-primary-replica'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      VersioningConfiguration:
+        Status: Enabled
+
+  S3ReplicationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: S3ReplicationPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ReplicateObject
+                  - s3:ReplicateDelete
+                  - s3:ReplicateTags
+                  - s3:GetObjectVersionForReplication
+                  - s3:GetBucketVersioning
+                  - s3:GetBucketLocation
+                Resource:
+                  - !Sub
+                    - arn:aws:s3:::${BucketName}
+                    - BucketName: !If
+                        - IsPrimaryRegion
+                        - !Ref PrimaryBucket
+                        - !Ref PrimaryBucketReplica
+                  - !Sub 'arn:aws:s3:::${PrimaryBucketReplica}/*'
+
+  ImageProcessingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/imageProcessor.handler
+      Policies:
+        - AWSBasicExecutionRole
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        <<: *CommonBuildProps
+        EntryPoints:
+          - handlers/processImageFunction.ts
+
+  CleanupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/cleanupFunction.handler
+      Policies:
+        - AWSBasicExecutionRole
+        - Statement:
+          Effect: Allow
+          Action:
+            - s3:DeleteObject
+          Resource:
+            - !Ref StagingBucket
+
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        <<: *CommonBuildProps
+        EntryPoints:
+          - handlers/cleanupFunction.ts
+
+  SendNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/sendNotification.handler
+      Policies:
+        - AWSBasicExecutionRole
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        <<: *CommonBuildProps
+        EntryPoints:
+          - handlers/sendNotification.ts
+
+  ImageProcessingStateMachineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: InvokeLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !GetAtt ImageProcessingFunction.Arn
+                  - !GetAtt CleanupFunction.Arn
+                  - !GetAtt SendNotificationFunction.Arn
+
+  ImageProcessingStateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Name: !Sub ${AWS::StackName}-ImageProcessingStateMachine
+      DefinitionUri: statemachine/objectCreated.asl.json
+      Role: !GetAtt ImageProcessingStateMachineRole.Arn
+      Policies:
+        - CloudWatchLogsFullAccess
+      Events:
+        EBPutRule:
+          Type: EventBridgeRule
+          Properties:
+            Pattern:
+              source:
+                - aws.s3
+              detail-type:
+                - Object Created
+              detail:
+                bucket:
+                  name:
+                    - !Ref StagingBucket
+
+  UploadImageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/upload.handler
+      Policies:
+        - Statement:
+          Effect: Allow
+          Action:
+            - s3:PutObject
+          Resource: !Ref StagingBucket
+      Events:
+        UploadImageEvent:
+          Type: Api
+          Properties:
+            Path: /upload
+            Method: post
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        <<: *CommonBuildProps
+        EntryPoints:
+          - handlers/upload.ts
 
   HelloWorldFunction:
     Type: AWS::Serverless::Function
