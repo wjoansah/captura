@@ -168,7 +168,7 @@ Resources:
 
   PrimaryBucketReplica:
     Type: AWS::S3::Bucket
-    Condition: !Not IsPrimaryRegion
+    Condition: !Equals [ !Ref IsPrimaryRegion, 'false' ]
     Properties:
       BucketName: !Sub '${AWS::StackName}-captura-bucket-primary-replica'
       PublicAccessBlockConfiguration:
