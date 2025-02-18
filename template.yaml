@@ -24,6 +24,7 @@ BuildProps: &CommonBuildProps
   Minify: true
   Target: "es2020"
   Sourcemap: true
+  tsconfig: "__TSCONFIG_PATH__"
 
 Parameters:
   DevAuthCallbackUrl:
@@ -42,7 +43,8 @@ Parameters:
     Default: "eu-west-1"
 
 Conditions:
-  IsPrimaryRegion: !Equals [!Ref AWS::Region, !Ref PrimaryRegion]
+  IsPrimaryRegion: !Equals [ !Ref AWS::Region, !Ref PrimaryRegion ]
+  IsDRRegion: !Not IsPrimaryRegion
 
 Resources:
   DependenciesLayer:
@@ -125,7 +127,6 @@ Resources:
       UserPoolId: !Ref UserPool
       ManagedLoginVersion: "2"
 
-
   BrandedLogin:
     Type: AWS::Cognito::ManagedLoginBranding
     Properties:
@@ -168,7 +169,7 @@ Resources:
 
   PrimaryBucketReplica:
     Type: AWS::S3::Bucket
-    Condition: !Equals [ !Ref IsPrimaryRegion, 'false' ]
+    Condition: IsDRRegion
     Properties:
       BucketName: !Sub '${AWS::StackName}-captura-bucket-primary-replica'
       PublicAccessBlockConfiguration:
@@ -211,52 +212,6 @@ Resources:
                         - !Ref PrimaryBucketReplica
                   - !Sub 'arn:aws:s3:::${PrimaryBucketReplica}/*'
 
-  ImageProcessingFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: handlers/imageProcessor.handler
-      Policies:
-        - AWSBasicExecutionRole
-    Metadata:
-      BuildMethod: esbuild
-      BuildProperties:
-        <<: *CommonBuildProps
-        EntryPoints:
-          - handlers/processImageFunction.ts
-
-  CleanupFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: handlers/cleanupFunction.handler
-      Policies:
-        - AWSBasicExecutionRole
-        - Statement:
-          Effect: Allow
-          Action:
-            - s3:DeleteObject
-          Resource:
-            - !Ref StagingBucket
-
-    Metadata:
-      BuildMethod: esbuild
-      BuildProperties:
-        <<: *CommonBuildProps
-        EntryPoints:
-          - handlers/cleanupFunction.ts
-
-  SendNotificationFunction:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: handlers/sendNotification.handler
-      Policies:
-        - AWSBasicExecutionRole
-    Metadata:
-      BuildMethod: esbuild
-      BuildProperties:
-        <<: *CommonBuildProps
-        EntryPoints:
-          - handlers/sendNotification.ts
-
   ImageProcessingStateMachineRole:
     Type: AWS::IAM::Role
     Properties:
@@ -284,7 +239,7 @@ Resources:
     Type: AWS::Serverless::StateMachine
     Properties:
       Name: !Sub ${AWS::StackName}-ImageProcessingStateMachine
-      DefinitionUri: statemachine/objectCreated.asl.json
+      DefinitionUri: src/statemachine/objectCreated.asl.json
       Role: !GetAtt ImageProcessingStateMachineRole.Arn
       Policies:
         - CloudWatchLogsFullAccess
@@ -324,6 +279,51 @@ Resources:
         <<: *CommonBuildProps
         EntryPoints:
           - handlers/upload.ts
+
+  ImageProcessingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/imageProcessor.handler
+      Policies:
+        - AWSBasicExecutionRole
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        <<: *CommonBuildProps
+        EntryPoints:
+          - handlers/processImageFunction.ts
+
+  CleanupFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/cleanupFunction.handler
+      Policies:
+        - AWSBasicExecutionRole
+        - Statement:
+          Effect: Allow
+          Action:
+            - s3:DeleteObject
+          Resource:
+            - !Ref StagingBucket
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        <<: *CommonBuildProps
+        EntryPoints:
+          - handlers/cleanupFunction.ts
+
+  SendNotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/sendNotification.handler
+      Policies:
+        - AWSBasicExecutionRole
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        <<: *CommonBuildProps
+        EntryPoints:
+          - handlers/sendNotificationFunction.ts
 
   HelloWorldFunction:
     Type: AWS::Serverless::Function
