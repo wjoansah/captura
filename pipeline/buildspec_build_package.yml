@@ -13,7 +13,8 @@ phases:
   build:
     commands:
       - make deps-layer
-      - sed -i "s|__TSCONFIG_PATH__|$(printf '%s\n' "$(pwd)/src/tsconfig.json" | sed 's/[\/&]/\\&/g')|g" ${SAM_TEMPLATE}
+      - echo "Source directory: ${CODEBUILD_SRC_DIR}"
+      - make tsconfig
       - sam build --use-container --template ${SAM_TEMPLATE}
       - . ./assume-role.sh ${TESTING_PIPELINE_EXECUTION_ROLE} dev-package
       - sam package --s3-bucket ${TESTING_ARTIFACT_BUCKET}
