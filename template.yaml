@@ -198,12 +198,9 @@ Resources:
                   - s3:GetBucketVersioning
                   - s3:GetBucketLocation
                 Resource:
-                  - !Sub
-                    - arn:aws:s3:::${BucketName}
-                    - BucketName: !If
-                        - IsPrimaryRegion
-                        - !Ref PrimaryBucket
-                        - !Ref PrimaryBucketReplica
+                  - !Sub 'arn:aws:s3:::${AWS::StackName}-captura-bucket-primary'
+                  - !Sub 'arn:aws:s3:::${AWS::StackName}-captura-bucket-primary/*'
+                  - !Sub 'arn:aws:s3:::${PrimaryBucketReplica}'
                   - !Sub 'arn:aws:s3:::${PrimaryBucketReplica}/*'
 
   ImageProcessingStateMachineRole:
