@@ -297,12 +297,13 @@ Resources:
       Handler: handlers/cleanupFunction.handler
       Policies:
         - AWSBasicExecutionRole
-        - Statement:
-          Effect: Allow
-          Action:
-            - s3:DeleteObject
-          Resource:
-            - !Ref StagingBucket
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - s3:DeleteObject
+              Resource:
+                - !GetAtt StagingBucket.Arn
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
