@@ -38,7 +38,7 @@ Parameters:
 
 Conditions:
   IsPrimaryRegion: !Equals [ !Ref AWS::Region, !Ref PrimaryRegion ]
-  IsDRRegion: !Not IsPrimaryRegion
+  IsDRRegion: !Not [ !Condition IsPrimaryRegion ]
 
 Resources:
   DependenciesLayer:
