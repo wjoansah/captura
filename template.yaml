@@ -263,11 +263,8 @@ Resources:
     Properties:
       Handler: handlers/upload.handler
       Policies:
-        - Statement:
-          Effect: Allow
-          Action:
-            - s3:PutObject
-          Resource: !Ref StagingBucket
+        - S3WritePolicy:
+            BucketName: !Ref StagingBucket
       Events:
         UploadImageEvent:
           Type: Api
