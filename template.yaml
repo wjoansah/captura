@@ -161,13 +161,13 @@ Resources:
         RestrictPublicBuckets: false
       VersioningConfiguration:
         Status: Enabled
-    ReplicationConfiguration:
-      Role: !GetAtt S3ReplicationRole.Arn
-      Rules:
-        - Destination:
-            Bucket: !Sub arn:aws:s3:::${PrimaryBucketReplica}
-          Status: Enabled
-          Prefix: ""
+      ReplicationConfiguration:
+        Role: !GetAtt S3ReplicationRole.Arn
+        Rules:
+          - Destination:
+              Bucket: !Sub arn:aws:s3:::${PrimaryBucketReplica}
+            Status: Enabled
+            Prefix: ""
 
   PrimaryBucketReplica:
     Type: AWS::S3::Bucket
