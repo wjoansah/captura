@@ -267,6 +267,7 @@ Resources:
     Properties:
       Handler: handlers/upload.handler
       Policies:
+        - AWSLambdaBasicExecutionRole
         - S3WritePolicy:
             BucketName: !Ref StagingBucket
       Events:
@@ -292,7 +293,7 @@ Resources:
     Properties:
       Handler: handlers/imageProcessor.handler
       Policies:
-        - AWSBasicExecutionRole
+        - AWSLambdaBasicExecutionRole
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -305,7 +306,7 @@ Resources:
     Properties:
       Handler: handlers/cleanupFunction.handler
       Policies:
-        - AWSBasicExecutionRole
+        - AWSLambdaBasicExecutionRole
         - Version: '2012-10-17'
           Statement:
             - Effect: Allow
@@ -325,7 +326,7 @@ Resources:
     Properties:
       Handler: handlers/sendNotification.handler
       Policies:
-        - AWSBasicExecutionRole
+        - AWSLambdaBasicExecutionRole
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
