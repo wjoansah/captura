@@ -20,14 +20,6 @@ Globals:
     Layers:
       - !Ref DependenciesLayer
 
-BuildProps: &CommonBuildProps
-  Minify: true
-  Target: "es2020"
-  Sourcemap: true
-  Tsconfig: "__TSCONFIG_PATH__"
-  External:
-    - "/opt/nodejs/*"
-
 Parameters:
   DevAuthCallbackUrl:
     Type: String
@@ -273,8 +265,13 @@ Resources:
             Method: post
     Metadata:
       BuildMethod: esbuild
-      BuildProperties:
-        <<: *CommonBuildProps
+      BuildProperties: &CommonBuildProps
+        Minify: true
+        Target: "es2020"
+        Sourcemap: true
+        Tsconfig: "__TSCONFIG_PATH__"
+        External:
+          - "/opt/nodejs/*"
         EntryPoints:
           - handlers/upload.ts
 
