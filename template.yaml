@@ -157,7 +157,10 @@ Resources:
         Role: !GetAtt S3ReplicationRole.Arn
         Rules:
           - Destination:
-              Bucket: !Sub arn:aws:s3:::${PrimaryBucketReplica}
+              Bucket: !If
+                - IsPrimaryRegion
+                - !Sub 'arn:aws:s3:::${AWS::StackName}-captura-bucket-primary-replica'
+                - !Ref 'AWS::NoValue'
             Status: Enabled
             Prefix: ""
 
@@ -198,10 +201,22 @@ Resources:
                   - s3:GetBucketVersioning
                   - s3:GetBucketLocation
                 Resource:
-                  - !Sub 'arn:aws:s3:::${AWS::StackName}-captura-bucket-primary'
-                  - !Sub 'arn:aws:s3:::${AWS::StackName}-captura-bucket-primary/*'
-                  - !Sub 'arn:aws:s3:::${PrimaryBucketReplica}'
-                  - !Sub 'arn:aws:s3:::${PrimaryBucketReplica}/*'
+                  - !If
+                    - IsPrimaryRegion
+                    - !Sub 'arn:aws:s3:::${AWS::StackName}-captura-bucket-primary'
+                    - !Ref 'AWS::NoValue'
+                  - !If
+                    - IsPrimaryRegion
+                    - !Sub 'arn:aws:s3:::${AWS::StackName}-captura-bucket-primary/*'
+                    - !Ref 'AWS::NoValue'
+                  - !If
+                    - IsDRRegion
+                    - !Sub 'arn:aws:s3:::${AWS::StackName}-captura-bucket-primary-replica'
+                    - !Ref 'AWS::NoValue'
+                  - !If
+                    - IsDRRegion
+                    - !Sub 'arn:aws:s3:::${AWS::StackName}-captura-bucket-primary-replica/*'
+                    - !Ref 'AWS::NoValue'
 
   ImageProcessingStateMachineRole:
     Type: AWS::IAM::Role
