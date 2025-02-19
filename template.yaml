@@ -225,6 +225,7 @@ Resources:
               Service: states.amazonaws.com
             Action: 'sts:AssumeRole'
       Policies:
+        - CloudWatchLogsFullAccess
         - PolicyName: InvokeLambdaPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -243,8 +244,6 @@ Resources:
       Name: !Sub ${AWS::StackName}-ImageProcessingStateMachine
       DefinitionUri: src/statemachine/objectCreated.asl.json
       Role: !GetAtt ImageProcessingStateMachineRole.Arn
-      Policies:
-        - CloudWatchLogsFullAccess
       Events:
         EBPutRule:
           Type: EventBridgeRule
