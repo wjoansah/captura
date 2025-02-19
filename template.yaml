@@ -24,7 +24,9 @@ BuildProps: &CommonBuildProps
   Minify: true
   Target: "es2020"
   Sourcemap: true
-  tsconfig: "__TSCONFIG_PATH__"
+  Tsconfig: "__TSCONFIG_PATH__"
+  External:
+    - "/opt/nodejs/*"
 
 Parameters:
   DevAuthCallbackUrl:
