@@ -6,7 +6,6 @@ import {
 } from '/opt/nodejs/node_modules/@aws-sdk/client-s3';
 import { S3Event, Context } from 'aws-lambda';
 import { BlendMode, Jimp, JimpMime, loadFont, measureText, measureTextHeight } from '/opt/nodejs/node_modules/jimp';
-import { SANS_32_WHITE } from '/opt/nodejs/node_modules/@jimp/plugin-print/src/fonts';
 
 const s3 = new S3Client({});
 
@@ -30,7 +29,7 @@ export const handler = async (event: S3Event, context: Context): Promise<void> =
 
             // Create watermark text
             const watermarkText = 'Ze Watermark';
-            const font = await loadFont(SANS_32_WHITE);
+            const font = await loadFont(Jimp.FONT_SANS_32_WHITE);
             const textWidth = measureText(font, watermarkText);
             const textHeight = measureTextHeight(font, watermarkText, textWidth);
 
