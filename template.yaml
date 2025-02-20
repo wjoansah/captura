@@ -146,7 +146,6 @@ Resources:
 
   PrimaryBucket:
     Type: AWS::S3::Bucket
-    Condition: IsPrimaryRegion
     Properties:
       BucketName: !Sub '${AWS::StackName}-captura-bucket-primary'
       PublicAccessBlockConfiguration:
@@ -156,20 +155,18 @@ Resources:
         RestrictPublicBuckets: false
       VersioningConfiguration:
         Status: Enabled
-      ReplicationConfiguration:
-        Role: !GetAtt S3ReplicationRole.Arn
-        Rules:
-          - Destination:
-              Bucket: !If
-                - IsPrimaryRegion
-                - !Sub 'arn:aws:s3:::${AWS::StackName}-captura-bucket-primary-replica'
-                - !Ref 'AWS::NoValue'
-            Status: Enabled
-            Prefix: ""
+      ReplicationConfiguration: !If
+        - IsPrimaryRegion
+        - Role: !GetAtt S3ReplicationRole.Arn
+          Rules:
+            - Destination:
+                Bucket: !Sub 'arn:aws:s3:::${AWS::StackName}-captura-bucket-primary-replica'
+              Status: Enabled
+              Prefix: ""
+        - !Ref 'AWS::NoValue'
 
   PrimaryBucketReplica:
     Type: AWS::S3::Bucket
-    Condition: IsDRRegion
     Properties:
       BucketName: !Sub '${AWS::StackName}-captura-bucket-primary-replica'
       PublicAccessBlockConfiguration:
