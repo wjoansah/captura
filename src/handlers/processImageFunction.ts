@@ -10,6 +10,11 @@ import { BlendMode, Jimp, JimpMime, loadFont, measureText, measureTextHeight } f
 const s3 = new S3Client({});
 
 export const handler = async (event: S3Event, context: Context): Promise<void> => {
+    console.log(event);
+    if (!event.Records) {
+        console.warn('no items in event record');
+        return;
+    }
     for (const record of event.Records) {
         const bucket = record.s3.bucket.name;
         const key = decodeURIComponent(record.s3.object.key.replace(/\+/g, ' '));
