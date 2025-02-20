@@ -1,7 +1,12 @@
-import { S3Client, GetObjectCommand, PutObjectCommand, PutObjectCommandInput } from '/opt/nodejs/@aws-sdk/client-s3';
+import {
+    S3Client,
+    GetObjectCommand,
+    PutObjectCommand,
+    PutObjectCommandInput,
+} from '/opt/nodejs/node_modules/@aws-sdk/client-s3';
 import { S3Event, Context } from 'aws-lambda';
-import { BlendMode, Jimp, JimpMime, loadFont, measureText, measureTextHeight } from '/opt/nodejs/jimp';
-import { SANS_32_WHITE } from '/opt/nodejs/jimp/dist/esm/fonts';
+import { BlendMode, Jimp, JimpMime, loadFont, measureText, measureTextHeight } from '/opt/nodejs/node_modules/jimp';
+import { SANS_32_WHITE } from '/opt/nodejs/node_modules/@jimp/plugin-print/src/fonts';
 
 const s3 = new S3Client({});
 

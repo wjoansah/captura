@@ -11,8 +11,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "/opt/nodejs/*": [
-        "../layers/deps/nodejs/node_modules/*"
+      "/opt/nodejs/node_modules/*": [
+        "../layers/deps/node_modules/*"
       ]
     }
   },

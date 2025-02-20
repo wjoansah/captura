@@ -1,4 +1,4 @@
-import { S3Client, DeleteObjectCommand } from '/opt/nodejs/@aws-sdk/client-s3';
+import { S3Client, DeleteObjectCommand } from '/opt/nodejs/node_modules/@aws-sdk/client-s3';
 import { S3Event, Context } from 'aws-lambda';
 
 const s3 = new S3Client({});

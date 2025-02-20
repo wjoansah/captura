@@ -1,4 +1,4 @@
-import { createRemoteJWKSet, jwtVerify, JWTVerifyResult, JWTPayload } from '/opt/nodejs/jose';
+import { createRemoteJWKSet, jwtVerify, JWTVerifyResult, JWTPayload } from '/opt/nodejs/node_modules//jose';
 import { Context } from 'aws-lambda';
 
 const USER_POOL_ID = process.env.USER_POOL_ID!;
