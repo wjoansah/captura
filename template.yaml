@@ -296,7 +296,7 @@ Resources:
   ImageProcessingFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: handlers/imageProcessor.handler
+      Handler: handlers/processImageFunction.handler
       Policies:
         - AWSLambdaBasicExecutionRole
     Metadata:
