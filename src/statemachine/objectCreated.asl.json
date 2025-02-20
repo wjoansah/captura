@@ -11,7 +11,7 @@
             "States.TaskFailed"
           ],
           "IntervalSeconds": 300,
-          "MaxAttempts": 3,
+          "MaxAttempts": 2,
           "BackoffRate": 2.0
         }
       ],
