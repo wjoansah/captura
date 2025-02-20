@@ -270,7 +270,7 @@ Resources:
   UploadImageFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: handlers/upload.handler
+      Handler: upload.handler
       Policies:
         - AWSLambdaBasicExecutionRole
         - S3WritePolicy:
@@ -296,7 +296,7 @@ Resources:
   ImageProcessingFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: handlers/processImageFunction.handler
+      Handler: processImageFunction.handler
       Policies:
         - AWSLambdaBasicExecutionRole
     Metadata:
@@ -309,7 +309,7 @@ Resources:
   CleanupFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: handlers/cleanupFunction.handler
+      Handler: cleanupFunction.handler
       Policies:
         - AWSLambdaBasicExecutionRole
         - Version: '2012-10-17'
@@ -329,7 +329,7 @@ Resources:
   SendNotificationFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: handlers/sendNotification.handler
+      Handler: sendNotification.handler
       Policies:
         - AWSLambdaBasicExecutionRole
     Metadata:
