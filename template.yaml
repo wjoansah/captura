@@ -329,7 +329,7 @@ Resources:
   SendNotificationFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: sendNotification.handler
+      Handler: sendNotificationFunction.handler
       Policies:
         - AWSLambdaBasicExecutionRole
     Metadata:
