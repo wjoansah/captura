@@ -50,6 +50,9 @@ Resources:
       CompatibleRuntimes:
         - nodejs22.x
       RetentionPolicy: Delete
+    Metadata:
+      BuildMethod: nodejs22.x
+      BuildArchitecture: x86_64
 
   # User Pool
   UserPool:
