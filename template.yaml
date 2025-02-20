@@ -248,6 +248,10 @@ Resources:
     Properties:
       Name: !Sub ${AWS::StackName}-ImageProcessingStateMachine
       DefinitionUri: src/statemachine/objectCreated.asl.json
+      DefinitionSubstitutions:
+        ImageProcessingFunctionArn: !GetAtt ImageProcessingFunction.Arn
+        CleanupFunctionArn: !GetAtt CleanupFunction.Arn
+        SendNotificationFunctionArn: !GetAtt SendNotificationFunction.Arn
       Role: !GetAtt ImageProcessingStateMachineRole.Arn
       Events:
         EBPutRule:

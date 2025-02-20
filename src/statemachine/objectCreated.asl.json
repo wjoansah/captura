@@ -4,7 +4,7 @@
   "States": {
     "ProcessImage": {
       "Type": "Task",
-      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${ImageProcessingFunction}",
+      "Resource": "${ImageProcessingFunctionArn}",
       "Retry": [
         {
           "ErrorEquals": [
@@ -27,12 +27,12 @@
     },
     "DeleteOriginalImage": {
       "Type": "Task",
-      "Resource": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${CleanupFunction}",
+      "Resource": "${CleanupFunctionArn}",
       "End": true
     },
     "SendFailureNotification": {
       "Type": "Task",
-      "Resource": "arn:aws:sns:${AWS::Region}:${AWS::AccountId}:${SendNotificationFunction}",
+      "Resource": "${SendNotificationFunctionArn}",
       "End": true
     }
   }
