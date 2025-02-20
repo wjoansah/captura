@@ -13,7 +13,6 @@ phases:
   build:
     commands:
       - make deps-layer
-      - env | grep CODEBUILD_SRC_DIR
       - make tsconfig
       - sam build --use-container --template ${SAM_TEMPLATE}
       - . ./assume-role.sh ${TESTING_PIPELINE_EXECUTION_ROLE} dev-package
