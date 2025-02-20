@@ -228,8 +228,9 @@ Resources:
             Principal:
               Service: states.amazonaws.com
             Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
       Policies:
-        - CloudWatchLogsFullAccess
         - PolicyName: InvokeLambdaPolicy
           PolicyDocument:
             Version: '2012-10-17'
