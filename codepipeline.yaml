@@ -44,13 +44,13 @@ Parameters:
     Default: "eu-central-1"
   DevStackName:
     Type: String
-    Default: "captura-stack-Dev"
+    Default: "captura-stack-dev"
   ProdRegion:
     Type: String
     Default: "eu-central-1"
   ProdStackName:
     Type: String
-    Default: "captura-stack-Prod"
+    Default: "captura-stack-prod"
   DevPipelineExecutionRole:
     Type: String
     Default: "arn:aws:iam::448049785966:role/aws-sam-cli-managed-Prod-pipe-PipelineExecutionRole-WJ2uN3jntqFU"
@@ -71,7 +71,7 @@ Parameters:
     Default: "eu-west-1"
   DRStackName:
     Type: String
-    Default: "captura-stack-DR"
+    Default: "captura-stack-dr"
   DRPipelineExecutionRole:
     Type: String
     Default: "arn:aws:iam::448049785966:role/aws-sam-cli-managed-DR-pipeli-PipelineExecutionRole-ZB3vePL9qZ8o"
