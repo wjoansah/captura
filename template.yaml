@@ -297,6 +297,9 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Handler: processImageFunction.handler
+      Environment:
+        Variables:
+         PRIMARY_BUCKET_NAME: !Ref PrimaryBucket
       Policies:
         - AWSLambdaBasicExecutionRole
     Metadata:

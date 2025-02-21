@@ -8,19 +8,29 @@ import { Context, S3ObjectCreatedNotificationEvent } from 'aws-lambda';
 import { BlendMode, Jimp, JimpMime, loadFont, measureText, measureTextHeight } from '/opt/nodejs/node_modules/jimp';
 
 const s3 = new S3Client({});
+const PRIMARY_BUCKET_NAME = process.env.PRIMARY_BUCKET_NAME!;
 
-export const handler = async (event: S3ObjectCreatedNotificationEvent, context: Context): Promise<void> => {
+export interface ImageProcessingResult {
+    bucket: string;
+    key: string;
+    message?: string;
+}
+
+export const handler = async (
+    event: S3ObjectCreatedNotificationEvent,
+    context: Context,
+): Promise<ImageProcessingResult | undefined> => {
     const bucket = event.detail.bucket.name;
     const key = decodeURIComponent(event.detail.object.key.replace(/\+/g, ' '));
 
     try {
         // Retrieve the image from S3
         const getObjectParams = { Bucket: bucket, Key: key };
-        const { Body } = await s3.send(new GetObjectCommand(getObjectParams));
+        const { Body, ContentType } = await s3.send(new GetObjectCommand(getObjectParams));
 
         if (!Body) {
             console.error(`No content found at ${bucket}/${key}`);
-            return;
+            return undefined;
         }
 
         // Read the image with Jimp
@@ -48,22 +58,51 @@ export const handler = async (event: S3ObjectCreatedNotificationEvent, context: 
         });
 
         // Get the buffer of the modified image
-        const modifiedImageBuffer = await image.getBuffer(JimpMime.jpeg);
+        if (!ContentType) {
+            console.error('image has no content type');
+            return undefined;
+        }
+        const mime = getMimeType(ContentType);
 
-        // Define the destination key for the processed image
-        const destinationKey = `processed/${key}`;
+        if (!mime) {
+            console.error('unsupported mime type');
+            return undefined;
+        }
+        const modifiedImageBuffer = await image.getBuffer(mime);
 
         // Upload the modified image back to S3
         const putObjectParams: PutObjectCommandInput = {
-            Bucket: bucket,
-            Key: destinationKey,
+            Bucket: PRIMARY_BUCKET_NAME,
+            Key: key,
             Body: modifiedImageBuffer,
-            ContentType: 'image/jpeg',
+            ContentType,
         };
         await s3.send(new PutObjectCommand(putObjectParams));
+        console.log(`Successfully processed and uploaded ${key}`);
 
-        console.log(`Successfully processed and uploaded ${destinationKey}`);
+        return {
+            bucket,
+            key,
+        };
     } catch (error) {
         console.error(`Error processing ${bucket}/${key}:`, error);
+    }
+};
+
+const getMimeType = (contentType: string) => {
+    switch (contentType) {
+        case 'image/png':
+            return JimpMime.png;
+        case 'image/jpg':
+        case 'image/jpeg':
+            return JimpMime.jpeg;
+        case 'image/gif':
+            return JimpMime.gif;
+        case 'image/tiff':
+            return JimpMime.tiff;
+        case 'image/bmp':
+            return JimpMime.bmp;
+        default:
+            return null;
     }
 };
