@@ -242,6 +242,25 @@ Resources:
                   - !GetAtt ImageProcessingFunction.Arn
                   - !GetAtt CleanupFunction.Arn
                   - !GetAtt SendNotificationFunction.Arn
+        - PolicyName: StagingBucketReadPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource:
+                  - !Sub '${StagingBucket.Arn}/*'
+        - PolicyName: PrimaryBucketWritePolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource:
+                  - !Sub '${PrimaryBucket.Arn}/*'
 
   ImageProcessingStateMachine:
     Type: AWS::Serverless::StateMachine
@@ -309,6 +328,7 @@ Resources:
                 - s3:GetObject
               Resource:
                 - !GetAtt StagingBucket.Arn
+                - !Sub "${StagingBucket.Arn}/*"
         - Version: '2012-10-17'
           Statement:
             - Effect: Allow
@@ -316,6 +336,7 @@ Resources:
                 - s3:PutObject
               Resource:
                 - !GetAtt PrimaryBucket.Arn
+                - !Sub "${PrimaryBucket.Arn}/*"
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
