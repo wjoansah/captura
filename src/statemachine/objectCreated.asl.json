@@ -5,6 +5,7 @@
     "ProcessImage": {
       "Type": "Task",
       "Resource": "${ImageProcessingFunctionArn}",
+      "ResultPath": "$",
       "Retry": [
         {
           "ErrorEquals": [
@@ -28,6 +29,10 @@
     "DeleteOriginalImage": {
       "Type": "Task",
       "Resource": "${CleanupFunctionArn}",
+      "Parameters": {
+        "bucket.$": "$.bucket",
+        "key.$": "$.key"
+      },
       "End": true
     },
     "SendFailureNotification": {
