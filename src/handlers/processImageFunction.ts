@@ -24,19 +24,16 @@ export const handler = async (
     const key = decodeURIComponent(event.detail.object.key.replace(/\+/g, ' '));
 
     try {
-        // Retrieve the image from S3
         const getObjectParams = { Bucket: bucket, Key: key };
         const { Body, ContentType } = await s3.send(new GetObjectCommand(getObjectParams));
 
         if (!Body) {
             console.error(`No content found at ${bucket}/${key}`);
-            return undefined;
+            throw new Error(`No object found in ${bucket}/${key}`);
         }
 
-        // Read the image with Jimp
         const image = await Jimp.read(new Uint8Array(await Body.transformToByteArray()));
 
-        // Create watermark text
         const watermarkText = 'Ze Watermark';
         const font = await loadFont(Jimp.FONT_SANS_32_WHITE);
         const textWidth = measureText(font, watermarkText);
@@ -60,13 +57,13 @@ export const handler = async (
         // Get the buffer of the modified image
         if (!ContentType) {
             console.error('image has no content type');
-            return undefined;
+            throw new Error('Object has no content type');
         }
         const mime = getMimeType(ContentType);
 
         if (!mime) {
             console.error('unsupported mime type');
-            return undefined;
+            throw new Error('Unsupported mime type');
         }
         const modifiedImageBuffer = await image.getBuffer(mime);
 
@@ -86,6 +83,7 @@ export const handler = async (
         };
     } catch (error) {
         console.error(`Error processing ${bucket}/${key}:`, error);
+        throw error;
     }
 };
 
