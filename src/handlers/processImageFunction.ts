@@ -6,6 +6,7 @@ import {
 } from '/opt/nodejs/node_modules/@aws-sdk/client-s3';
 import { Context, S3ObjectCreatedNotificationEvent } from 'aws-lambda';
 import { BlendMode, Jimp, JimpMime, loadFont, measureText, measureTextHeight } from '/opt/nodejs/node_modules/jimp';
+import { Readable } from 'node:stream';
 
 const s3 = new S3Client({});
 const PRIMARY_BUCKET_NAME = process.env.PRIMARY_BUCKET_NAME!;
@@ -27,15 +28,23 @@ export const handler = async (
         const getObjectParams = { Bucket: bucket, Key: key };
         const { Body, ContentType } = await s3.send(new GetObjectCommand(getObjectParams));
 
-        if (!Body) {
+        if (!Body || !(Body instanceof Readable)) {
             console.error(`No content found at ${bucket}/${key}`);
             throw new Error(`No object found in ${bucket}/${key}`);
         }
+        console.log(typeof Body);
+        const chunks = [];
+        for await (const chunk of Body) {
+            chunks.push(chunk);
+        }
+        const imageBuffer = Buffer.concat(chunks);
 
-        const image = await Jimp.read(new Uint8Array(await Body.transformToByteArray()));
+        const image = await Jimp.read(imageBuffer);
 
         const watermarkText = 'Ze Watermark';
-        const font = await loadFont(Jimp.FONT_SANS_32_WHITE);
+        const font = await loadFont(
+            '/opt/nodejs/node_modules/@jimp/plugin-print/fonts/open-sans/open-sans-32-white/open-sans-32-white.fnt',
+        );
         const textWidth = measureText(font, watermarkText);
         const textHeight = measureTextHeight(font, watermarkText, textWidth);
 
