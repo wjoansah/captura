@@ -107,9 +107,11 @@ export const handler = async (event: APIGatewayEvent, context: Context) => {
     });
 
     // Allow all public resources/methods explicitly
-    policy.allowMethod(AuthPolicy.HttpVerb.GET, `/users/${principalId}`);
-    policy.allowMethod(AuthPolicy.HttpVerb.GET, `/tasks/myTasks`);
-    policy.allowMethod(AuthPolicy.HttpVerb.PUT, '/tasks/complete');
+    policy.allowMethod(AuthPolicy.HttpVerb.GET, '/images/myImages');
+    policy.allowMethod(AuthPolicy.HttpVerb.GET, '/images/feed');
+    policy.allowMethod(AuthPolicy.HttpVerb.GET, '/images/{id}/share');
+    policy.allowMethod(AuthPolicy.HttpVerb.POST, `/upload`);
+    policy.allowMethod(AuthPolicy.HttpVerb.DELETE, '/images/{id}');
 
     const response = { ...policy.build() };
     response.context = {
