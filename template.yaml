@@ -145,7 +145,7 @@ Resources:
   ImageUploadMetaDataTable:
     Type: AWS::DynamoDB::GlobalTable
     Properties:
-      TableName: ImageUploadMetaDataTable
+      TableName: !Sub '${AWS::StackName}-ImageUploadMetaDataTable'
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
