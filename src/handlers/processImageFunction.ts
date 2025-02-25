@@ -15,6 +15,7 @@ export interface ImageProcessingResult {
     bucket: string;
     key: string;
     message?: string;
+    metaData: Record<string, string> | undefined;
 }
 
 export const handler = async (
@@ -26,13 +27,13 @@ export const handler = async (
 
     try {
         const getObjectParams = { Bucket: bucket, Key: key };
-        const { Body, ContentType } = await s3.send(new GetObjectCommand(getObjectParams));
+        const { Body, ContentType, Metadata } = await s3.send(new GetObjectCommand(getObjectParams));
 
         if (!Body || !(Body instanceof Readable)) {
             console.error(`No content found at ${bucket}/${key}`);
             throw new Error(`No object found in ${bucket}/${key}`);
         }
-        console.log(typeof Body);
+
         const chunks = [];
         for await (const chunk of Body) {
             chunks.push(chunk);
@@ -41,7 +42,7 @@ export const handler = async (
 
         const image = await Jimp.read(imageBuffer);
 
-        const watermarkText = 'Ze Watermark';
+        const watermarkText = Metadata?.username ?? 'captura-watermark';
         const font = await loadFont(
             '/opt/nodejs/node_modules/@jimp/plugin-print/fonts/open-sans/open-sans-32-white/open-sans-32-white.fnt',
         );
@@ -60,7 +61,7 @@ export const handler = async (
         // Composite the watermark onto the original image
         image.composite(watermark, x, y, {
             mode: BlendMode.SRC_OVER,
-            opacitySource: 0.5,
+            opacitySource: 1,
         });
 
         // Get the buffer of the modified image
@@ -89,6 +90,7 @@ export const handler = async (
         return {
             bucket,
             key,
+            metaData: Metadata,
         };
     } catch (error) {
         console.error(`Error processing ${bucket}/${key}:`, error);
