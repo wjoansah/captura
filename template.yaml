@@ -105,6 +105,8 @@ Resources:
         - ALLOW_REFRESH_TOKEN_AUTH
       GenerateSecret: false
       PreventUserExistenceErrors: ENABLED
+      ReadAttributes:
+        - name
       RefreshTokenValidity: 30
       AccessTokenValidity: 6
       IdTokenValidity: 6
@@ -149,8 +151,6 @@ Resources:
           AttributeType: S
         - AttributeName: username
           AttributeType: S
-        - AttributeName: objectKey
-          AttributeType: S
         - AttributeName: date
           AttributeType: N
       KeySchema:
@@ -159,6 +159,8 @@ Resources:
         - AttributeName: username
           KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
       Replicas:
         - Region: !Ref PrimaryRegion
           PointInTimeRecoverySpecification:
@@ -170,6 +172,12 @@ Resources:
         - IndexName: UsernameIndex
           KeySchema:
             - AttributeName: username
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: DateIndex
+          KeySchema:
+            - AttributeName: date
               KeyType: HASH
           Projection:
             ProjectionType: ALL
