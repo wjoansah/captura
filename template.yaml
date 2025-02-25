@@ -6,6 +6,15 @@ Description: >
   SAM Template for captura
 
 Globals:
+  Api:
+    Auth:
+      DefaultAuthorizer: AuthorizerFunction
+      Authorizers:
+        AuthorizerFunction:
+          FunctionArn: !GetAtt AuthorizerFunction.Arn
+          Identity:
+            Headers:
+              - Authorization
   Function:
     CodeUri: src/
     Runtime: nodejs22.x
@@ -130,6 +139,40 @@ Resources:
       ClientId: !Ref UserPoolClient
       UserPoolId: !Ref UserPool
       UseCognitoProvidedValues: true
+
+  ImageUploadMetaDataTable:
+    Type: AWS::DynamoDB::GlobalTable
+    Properties:
+      TableName: ImageUploadMetaDataTable
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: username
+          AttributeType: S
+        - AttributeName: objectKey
+          AttributeType: S
+        - AttributeName: date
+          AttributeType: N
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        - AttributeName: username
+          KeyType: RANGE
+      BillingMode: PAY_PER_REQUEST
+      Replicas:
+        - Region: !Ref PrimaryRegion
+          PointInTimeRecoverySpecification:
+            PointInTimeRecoveryEnabled: true
+        - Region: !Ref DRRegion
+          PointInTimeRecoverySpecification:
+            PointInTimeRecoveryEnabled: true
+      GlobalSecondaryIndexes:
+        - IndexName: UsernameIndex
+          KeySchema:
+            - AttributeName: username
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
 
   StagingBucket:
     Type: AWS::S3::Bucket
@@ -271,6 +314,7 @@ Resources:
         ImageProcessingFunctionArn: !GetAtt ImageProcessingFunction.Arn
         CleanupFunctionArn: !GetAtt CleanupFunction.Arn
         SendNotificationFunctionArn: !GetAtt SendNotificationFunction.Arn
+        AddDynamoDbEntry: !GetAtt AddDynamoDbEntryFunction.Arn
       Role: !GetAtt ImageProcessingStateMachineRole.Arn
       Events:
         EBPutRule:
@@ -376,6 +420,65 @@ Resources:
         <<: *CommonBuildProps
         EntryPoints:
           - handlers/sendNotificationFunction.ts
+
+  ShareImageFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: shareImageFunction.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ImageUploadMetaDataTable
+      Environment:
+        Variables:
+          PRIMARY_BUCKET_NAME: !Ref PrimaryBucket
+      Events:
+        ShareImageEvent:
+          Type: Api
+          Properties:
+            Path: "/images/{id}/share"
+            Method: GET
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        <<: *CommonBuildProps
+        EntryPoints:
+          - handlers/shareImageFunction.ts
+
+  AddDynamoDbEntryFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: addDynamoEntry.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ImageUploadMetaDataTable
+      Environment:
+        Variables:
+          UPLOAD_METADATA_TABLE_NAME: !Ref ImageUploadMetaDataTable
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        <<: *CommonBuildProps
+        EntryPoints:
+          - handlers/addDynamoEntry.ts
+
+
+  AuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: authorizer.handler
+      Description: Handler for Lambda authorizer
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref UserPool
+          APP_CLIENT_ID: !Ref UserPoolClient
+      Tags:
+        Stack: !Sub "${AWS::StackName}"
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        <<: *CommonBuildProps
+        EntryPoints:
+          - handlers/authorizer.ts
 
   HelloWorldFunction:
     Type: AWS::Serverless::Function
