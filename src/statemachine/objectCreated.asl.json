@@ -26,6 +26,17 @@
       ],
       "Next": "DeleteOriginalImage"
     },
+    "AddDynamoDbEntry": {
+      "Type": "Task",
+      "Resource": "${AddDynamoDbEntryFunction}",
+      "ResultPath": "$",
+      "Parameters": {
+        "bucket.$": "$.bucket",
+        "key.$": "$.key",
+        "metaData.$": "$.metaData"
+      },
+      "Next": "DeleteOriginalImage"
+    },
     "DeleteOriginalImage": {
       "Type": "Task",
       "Resource": "${CleanupFunctionArn}",
