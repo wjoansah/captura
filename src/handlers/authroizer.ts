@@ -116,6 +116,7 @@ export const handler = async (event: APIGatewayEvent, context: Context) => {
     const response = { ...policy.build() };
     response.context = {
         email: validatedDecodedToken['email'],
+        username: validatedDecodedToken['name'],
     };
 
     return response;
