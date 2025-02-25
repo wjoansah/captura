@@ -293,6 +293,7 @@ Resources:
                   - !GetAtt ImageProcessingFunction.Arn
                   - !GetAtt CleanupFunction.Arn
                   - !GetAtt SendNotificationFunction.Arn
+                  - !GetAtt AddDynamoDbEntryFunction.Arn
         - PolicyName: StagingBucketReadPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -322,7 +323,7 @@ Resources:
         ImageProcessingFunctionArn: !GetAtt ImageProcessingFunction.Arn
         CleanupFunctionArn: !GetAtt CleanupFunction.Arn
         SendNotificationFunctionArn: !GetAtt SendNotificationFunction.Arn
-        AddDynamoDbEntry: !GetAtt AddDynamoDbEntryFunction.Arn
+        AddDynamoDbEntryFunction: !GetAtt AddDynamoDbEntryFunction.Arn
       Role: !GetAtt ImageProcessingStateMachineRole.Arn
       Events:
         EBPutRule:

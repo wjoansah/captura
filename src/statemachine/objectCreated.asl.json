@@ -24,7 +24,7 @@
           "Next": "SendFailureNotification"
         }
       ],
-      "Next": "DeleteOriginalImage"
+      "Next": "AddDynamoDbEntry"
     },
     "AddDynamoDbEntry": {
       "Type": "Task",
