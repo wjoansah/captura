@@ -7,10 +7,15 @@ Description: >
 
 Globals:
   Api:
+    MethodSettings:
+      - ResourcePath: "/*"
+        LoggingLevel: INFO
+        HttpMethod: "*"
+        DataTraceEnabled: True
     Auth:
-      DefaultAuthorizer: AuthorizerFunction
+      DefaultAuthorizer: LambdaTokenAuthorizer
       Authorizers:
-        AuthorizerFunction:
+        LambdaTokenAuthorizer:
           FunctionArn: !GetAtt AuthorizerFunction.Arn
           Identity:
             Headers:
@@ -354,7 +359,7 @@ Resources:
           Type: Api
           Properties:
             Path: /upload
-            Method: post
+            Method: POST
     Metadata:
       BuildMethod: esbuild
       BuildProperties: &CommonBuildProps
