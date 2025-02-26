@@ -109,7 +109,7 @@ export const handler = async (event: APIGatewayEvent, context: Context) => {
     // Allow all public resources/methods explicitly
     policy.allowMethod(AuthPolicy.HttpVerb.GET, '/images/myImages');
     policy.allowMethod(AuthPolicy.HttpVerb.GET, '/images/feed');
-    policy.allowMethod(AuthPolicy.HttpVerb.GET, '/images/{id}/share');
+    policy.allowMethod(AuthPolicy.HttpVerb.GET, '/images/share/{id}');
     policy.allowMethod(AuthPolicy.HttpVerb.POST, `/upload`);
     policy.allowMethod(AuthPolicy.HttpVerb.DELETE, '/images/{id}');
 
@@ -166,7 +166,7 @@ class AuthPolicy {
     private awsAccountId: string;
     private principalId: string;
     private version = '2012-10-17';
-    private pathRegex = new RegExp('^[/.a-zA-Z0-9-*]+$');
+    private pathRegex = new RegExp('^[/.a-zA-Z0-9-*{}]+$');
     private allowMethods: Method[] = [];
     private denyMethods: Method[] = [];
     private restApiId: string;
