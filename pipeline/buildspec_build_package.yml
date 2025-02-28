@@ -1,4 +1,7 @@
 version: 0.2
+cache:
+  paths:
+    - /root/.cache/pip
 phases:
   install:
     runtime-versions:
@@ -17,12 +20,12 @@ phases:
       - sam build --use-container --template ${SAM_TEMPLATE}
       - . ./assume-role.sh ${TESTING_PIPELINE_EXECUTION_ROLE} dev-package
       - sam package --s3-bucket ${TESTING_ARTIFACT_BUCKET}
-                    --region ${TESTING_REGION}
-                    --output-template-file packaged-dev.yaml
+        --region ${TESTING_REGION}
+        --output-template-file packaged-dev.yaml
       - . ./assume-role.sh ${PROD_PIPELINE_EXECUTION_ROLE} prod-package
       - sam package --s3-bucket ${PROD_ARTIFACT_BUCKET}
-                    --region ${PROD_REGION}
-                    --output-template-file packaged-prod.yaml
+        --region ${PROD_REGION}
+        --output-template-file packaged-prod.yaml
 artifacts:
   files:
     - packaged-dev.yaml
