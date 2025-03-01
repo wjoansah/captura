@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { S3Client, PutObjectCommand, PutObjectCommandInput } from '/opt/nodejs/node_modules/@aws-sdk/client-s3';
-import { fileTypeFromBuffer } from '/opt/nodejs/node_modules/file-type';
+import { S3Client, PutObjectCommand, PutObjectCommandInput } from '/opt/nodejs/node_modules/@aws-sdk/client-s3/dist-es/index.js';
+import { fileTypeFromBuffer } from '/opt/nodejs/node_modules/file-type/index.js';
 
 const STAGING_BUCKET_NAME = process.env.STAGING_BUCKET_NAME!;
 
