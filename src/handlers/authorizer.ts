@@ -1,5 +1,5 @@
-import { createRemoteJWKSet, jwtVerify, JWTVerifyResult, JWTPayload } from '/opt/nodejs/node_modules//jose';
-import { Context } from 'aws-lambda';
+import {createRemoteJWKSet, jwtVerify, JWTVerifyResult, JWTPayload} from '/opt/nodejs/node_modules/jose';
+import {Context} from 'aws-lambda';
 
 const USER_POOL_ID = process.env.USER_POOL_ID!;
 const APP_CLIENT_ID = process.env.APP_CLIENT_ID!;
@@ -63,7 +63,7 @@ const validateToken = async (token: string, region: string): Promise<JWTPayload 
 
         // Verify the token signature using the key
         const JWKS = createRemoteJWKSet(new URL(keysUrl));
-        const { payload }: JWTVerifyResult = await jwtVerify(token, JWKS, {
+        const {payload}: JWTVerifyResult = await jwtVerify(token, JWKS, {
             audience: APP_CLIENT_ID, // Verify the audience
         });
 
@@ -113,7 +113,7 @@ export const handler = async (event: APIGatewayEvent, context: Context) => {
     policy.allowMethod(AuthPolicy.HttpVerb.POST, `/upload`);
     policy.allowMethod(AuthPolicy.HttpVerb.DELETE, '/images/{id}');
 
-    const response = { ...policy.build() };
+    const response = {...policy.build()};
     response.context = {
         email: validatedDecodedToken['email'],
         username: validatedDecodedToken['name'],
