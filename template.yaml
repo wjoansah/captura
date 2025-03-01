@@ -365,6 +365,7 @@ Resources:
         Target: "es2020"
         Sourcemap: true
         Tsconfig: "__TSCONFIG_PATH__"
+        Platform: "node"
         External:
           - "/opt/nodejs/*"
         EntryPoints:
