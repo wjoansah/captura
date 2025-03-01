@@ -367,6 +367,8 @@ Resources:
         Target: "es2020"
         Sourcemap: true
         Format: "esm"
+        OutExtension:
+          - .js=.mjs
         Tsconfig: "__TSCONFIG_PATH__"
         External:
           - "/opt/nodejs/*"
